@@ -1,0 +1,319 @@
+# Well-Founded Arbitration Under Internal Epistemic Pluralities
+# Interactive Tutorial - Part 1: Building Intuition from First Principles
+
+import numpy as np
+import matplotlib.pyplot as plt
+import seaborn as sns
+from scipy.special import softmax
+import pandas as pd
+import warnings
+warnings.filterwarnings('ignore')
+
+# Set up plotting style
+plt.style.use('seaborn-v0_8')
+sns.set_palette("husl")
+
+print("🤔 Welcome to the Well-Founded Arbitration Tutorial!")
+print("We'll discover the key concepts together through exploration and questioning.")
+print("\n" + "="*70)
+
+# PART 1: THE FUNDAMENTAL DILEMMA
+print("\n🎯 PART 1: The Fundamental Dilemma")
+print("="*40)
+
+print("""
+Let's start with a simple scenario to build intuition...
+
+Imagine you're an intelligent system trying to decide what to have for lunch. 
+You have 3 internal 'advisors' (we'll call them experts):
+
+Expert 1: Your health module (cares about nutrition)
+Expert 2: Your taste module (cares about flavor) 
+Expert 3: Your budget module (cares about cost)
+
+Each expert gives you a 'confidence score' between 0 and 1 for each option.
+""")
+
+# Create a simple example
+np.random.seed(42)
+options = ['Salad', 'Pizza', 'Sushi']
+experts = ['Health Expert', 'Taste Expert', 'Budget Expert']
+
+# Expert predictions for each option
+expert_predictions = np.array([
+    [0.9, 0.3, 0.1],  # Health expert: loves salad, hates pizza/sushi
+    [0.2, 0.9, 0.8],  # Taste expert: loves pizza/sushi, meh on salad  
+    [0.8, 0.6, 0.2],  # Budget expert: salad and pizza are affordable, sushi is not
+])
+
+print("\n📊 Here are their predictions:")
+df = pd.DataFrame(expert_predictions, index=experts, columns=options)
+print(df)
+
+print(f"\n🤔 QUESTION 1: Look at the predictions above.")
+print(f"If you could only listen to ONE expert, which option would each choose?")
+print(f"💭 Think about this before scrolling down...")
+
+print("\n" + "-"*50)
+
+# Show which option each expert prefers
+print("🔍 Each expert's preferred choice:")
+for i, expert in enumerate(experts):
+    preferred = options[np.argmax(expert_predictions[i])]
+    confidence = np.max(expert_predictions[i])
+    print(f"{expert}: {preferred} (confidence: {confidence:.1f})")
+
+print(f"\n🤔 QUESTION 2: Notice something interesting?")
+print(f"The experts disagree! This is the core challenge.")
+print(f"💭 In your own words, what problem does this create?")
+
+print("\n" + "="*70)
+
+# PART 2: NAIVE APPROACHES AND THEIR PROBLEMS
+print("\n🚫 PART 2: Why Simple Solutions Don't Work")
+print("="*45)
+
+print("""
+Let's try some obvious approaches and see what goes wrong...
+""")
+
+# Approach 1: Simple averaging
+print("🔹 APPROACH 1: Simple Averaging")
+simple_average = np.mean(expert_predictions, axis=0)
+print("Average predictions:", [f"{options[i]}: {simple_average[i]:.2f}" for i in range(3)])
+simple_winner = options[np.argmax(simple_average)]
+print(f"Winner by averaging: {simple_winner}")
+
+print(f"\n🤔 QUESTION 3: What could go wrong with simple averaging?")
+print(f"💭 Think about extreme cases...")
+
+# Let's create an extreme case
+print("\n🧪 EXPERIMENT: Extreme Disagreement")
+extreme_predictions = np.array([
+    [1.0, 0.0, 0.0],  # Expert 1: STRONGLY prefers option 1
+    [0.0, 1.0, 0.0],  # Expert 2: STRONGLY prefers option 2  
+    [0.0, 0.0, 1.0],  # Expert 3: STRONGLY prefers option 3
+])
+
+extreme_avg = np.mean(extreme_predictions, axis=0)
+print("Extreme case averages:", [f"{options[i]}: {extreme_avg[i]:.2f}" for i in range(3)])
+
+print(f"\n🤔 QUESTION 4: What happened? Does this result make sense?")
+print(f"💭 The averages are all equal! Is this a good outcome when experts strongly disagree?")
+
+print("\n" + "-"*50)
+
+# Approach 2: Majority vote
+print("\n🔹 APPROACH 2: Majority Vote")
+def majority_vote(predictions):
+    votes = np.argmax(predictions, axis=1)
+    return np.bincount(votes, minlength=len(options))
+
+votes = majority_vote(expert_predictions)
+print("Vote counts:", [f"{options[i]}: {votes[i]}" for i in range(3)])
+
+print(f"\n🤔 QUESTION 5: What problems do you see with majority voting?")
+print(f"💭 What if an expert is only slightly confident vs. very confident?")
+
+print("\n" + "="*70)
+
+# PART 3: INTRODUCING TEMPERATURE AND SOFT DECISIONS
+print("\n🌡️ PART 3: From Hard to Soft Decisions")
+print("="*40)
+
+print("""
+Instead of hard choices, let's use 'soft' decisions that capture uncertainty.
+We'll introduce a concept called 'temperature' (borrowed from physics).
+""")
+
+def soft_decision(predictions, temperature=1.0):
+    """Convert predictions to a probability distribution using softmax"""
+    # Average the predictions first
+    avg_pred = np.mean(predictions, axis=0)
+    # Apply softmax with temperature
+    return softmax(avg_pred / temperature)
+
+# Try different temperatures
+temperatures = [0.1, 0.5, 1.0, 2.0, 5.0]
+
+plt.figure(figsize=(12, 8))
+for i, temp in enumerate(temperatures):
+    plt.subplot(2, 3, i+1)
+    probs = soft_decision(expert_predictions, temp)
+    bars = plt.bar(options, probs, alpha=0.7)
+    plt.title(f'Temperature = {temp}')
+    plt.ylim(0, 1)
+    plt.ylabel('Probability')
+    
+    # Add value labels on bars
+    for bar, prob in zip(bars, probs):
+        plt.text(bar.get_x() + bar.get_width()/2, bar.get_height() + 0.01, 
+                f'{prob:.3f}', ha='center', va='bottom')
+
+plt.tight_layout()
+plt.show()
+
+print(f"\n🤔 QUESTION 6: What do you notice as temperature changes?")
+print(f"💭 What happens at very low vs very high temperatures?")
+
+print(f"\n🤔 QUESTION 7: Why might temperature be important?")
+print(f"💭 Think about when you'd want to be more vs less decisive...")
+
+print("\n" + "="*70)
+
+# PART 4: THE ABSTRACTION PROBLEM
+print("\n🎭 PART 4: The Abstraction Problem")
+print("="*35)
+
+print("""
+Now here's where it gets interesting...
+
+Suppose we want to group similar expert configurations together to make decisions more efficient.
+This is called 'abstraction' - we're abstracting away differences we think don't matter.
+""")
+
+# Create two slightly different expert configurations
+config1 = np.array([
+    [0.9, 0.3, 0.1],
+    [0.2, 0.9, 0.8], 
+    [0.8, 0.6, 0.2]
+])
+
+config2 = np.array([
+    [0.9, 0.3, 0.1],
+    [0.2, 0.85, 0.8],  # Slightly different middle value
+    [0.8, 0.6, 0.2]
+])
+
+print("Configuration 1:")
+print(pd.DataFrame(config1, index=experts, columns=options))
+print("\nConfiguration 2 (notice the small difference):")
+print(pd.DataFrame(config2, index=experts, columns=options))
+
+# Compare their soft decisions
+temp = 0.5
+prob1 = soft_decision(config1, temp)
+prob2 = soft_decision(config2, temp)
+
+print(f"\nResulting probabilities (temp={temp}):")
+for i, option in enumerate(options):
+    print(f"{option}: {prob1[i]:.4f} vs {prob2[i]:.4f} (diff: {abs(prob1[i]-prob2[i]):.4f})")
+
+print(f"\n🤔 QUESTION 8: Should we treat these configurations as 'the same'?")
+print(f"💭 The expert predictions are very similar, but are the resulting decisions similar?")
+
+print(f"\n🤔 QUESTION 9: What would make two configurations 'equivalent'?")
+print(f"💭 Think about what really matters for decision-making...")
+
+print("\n" + "="*70)
+
+# PART 5: DISCOVERING THE KEY INSIGHT
+print("\n💡 PART 5: The Key Insight")
+print("="*25)
+
+print("""
+Let's formalize our intuition. Two expert configurations should be considered 
+'equivalent' if they lead to the same decision behavior.
+
+But how do we measure if two probability distributions are 'the same'?
+""")
+
+from scipy.spatial.distance import jensenshannon
+from scipy.stats import entropy
+
+def kl_divergence(p, q):
+    """Compute KL divergence between two probability distributions"""
+    # Add small epsilon to avoid log(0)
+    epsilon = 1e-10
+    p = p + epsilon
+    q = q + epsilon
+    return entropy(p, q)
+
+# Let's measure different types of distances
+prob1 = soft_decision(config1, 0.5)
+prob2 = soft_decision(config2, 0.5)
+
+l1_dist = np.sum(np.abs(prob1 - prob2))
+l2_dist = np.sqrt(np.sum((prob1 - prob2)**2))
+js_dist = jensenshannon(prob1, prob2)
+kl_dist = kl_divergence(prob1, prob2)
+
+print(f"Different ways to measure distance between decisions:")
+print(f"L1 distance (sum of absolute differences): {l1_dist:.6f}")
+print(f"L2 distance (Euclidean): {l2_dist:.6f}")
+print(f"Jensen-Shannon distance: {js_dist:.6f}")
+print(f"KL divergence: {kl_dist:.6f}")
+
+print(f"\n🤔 QUESTION 10: Which distance measure seems most appropriate?")
+print(f"💭 Think about what we're really trying to capture...")
+
+print(f"\n🤔 QUESTION 11: What threshold should we use?")
+print(f"💭 When is the difference 'small enough' to ignore?")
+
+print("\n" + "="*70)
+
+# PART 6: THE STABILITY PROBLEM
+print("\n⚖️ PART 6: The Stability Problem")
+print("="*30)
+
+print("""
+There's another issue we haven't considered yet...
+
+Even if we group configurations appropriately, we still need to decide 
+HOW to combine the expert opinions. Should we:
+- Weight them equally?
+- Trust some experts more than others?
+- Weight based on confidence?
+""")
+
+# Different weighting schemes
+equal_weights = np.array([1/3, 1/3, 1/3])
+health_focused = np.array([0.6, 0.2, 0.2])
+taste_focused = np.array([0.2, 0.6, 0.2])
+budget_focused = np.array([0.2, 0.2, 0.6])
+
+weights = [equal_weights, health_focused, taste_focused, budget_focused]
+weight_names = ['Equal', 'Health-focused', 'Taste-focused', 'Budget-focused']
+
+def weighted_soft_decision(predictions, weights, temperature=1.0):
+    """Make soft decision with weighted expert opinions"""
+    weighted_avg = np.average(predictions, axis=0, weights=weights)
+    return softmax(weighted_avg / temperature)
+
+print("Same expert predictions, different weightings:")
+temp = 0.5
+for i, (w, name) in enumerate(zip(weights, weight_names)):
+    probs = weighted_soft_decision(expert_predictions, w, temp)
+    print(f"\n{name} weighting {w}:")
+    for j, option in enumerate(options):
+        print(f"  {option}: {probs[j]:.3f}")
+
+print(f"\n🤔 QUESTION 12: What problem does this create?")
+print(f"💭 Even with the same expert predictions, we get different decisions...")
+
+print(f"\n🤔 QUESTION 13: How might we handle uncertainty about the right weights?")
+print(f"💭 What if we're not sure how much to trust each expert?")
+
+print("\n" + "="*70)
+
+# REFLECTION QUESTIONS
+print("\n🎯 REFLECTION: Putting It All Together")
+print("="*40)
+
+print("""
+Before we dive into the mathematical framework, let's reflect on what we've discovered:
+
+🤔 BIG QUESTION 1: When should an agent ACT vs ABSTAIN?
+💭 Think about all the problems we've uncovered...
+
+🤔 BIG QUESTION 2: What are the two main challenges we've identified?
+💭 One is about grouping configurations, one is about weighting experts...
+
+🤔 BIG QUESTION 3: What would make a decision 'well-founded'?
+💭 What conditions need to be satisfied before acting?
+
+Take a moment to think about these questions. In the next part, we'll see how 
+the paper's mathematical framework addresses exactly these issues!
+""")
+
+print("\n📚 Ready for Part 2? We'll formalize these intuitions mathematically!")

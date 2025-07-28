@@ -1,0 +1,774 @@
+# Well-Founded Arbitration - Exercises and Next Steps
+
+import numpy as np
+import matplotlib.pyplot as plt
+import seaborn as sns
+from scipy.special import softmax
+from scipy.stats import entropy
+import pandas as pd
+import warnings
+warnings.filterwarnings('ignore')
+
+plt.style.use('seaborn-v0_8')
+sns.set_palette("husl")
+
+print("🎯 Well-Founded Arbitration: Exercises and Next Steps")
+print("="*55)
+
+print("""
+Now that you understand the core concepts, here are exercises to deepen 
+your understanding and connect to advanced topics in the paper.
+""")
+
+# EXERCISE 1: CANONICAL ABSTRACTION DISCOVERY
+print("\n🧪 EXERCISE 1: Canonical Abstraction Discovery")
+print("="*45)
+
+print("""
+CHALLENGE: Implement the canonical abstraction from Definition 1 in the paper.
+
+The canonical abstraction groups configurations Q and Q' together if and only if:
+π*(·|Q) = π*(·|Q') 
+
+where π* is the soft best-response policy.
+
+Your task: Complete the implementation below.
+""")
+
+def canonical_abstraction_exercise():
+    """
+    Exercise: Implement the canonical abstraction
+    """
+    print("🎯 YOUR TASK:")
+    print("""
+    1. Complete the `canonical_equivalence` function
+    2. Test it on the provided configurations  
+    3. Verify it satisfies the optimality properties from Proposition 1
+    """)
+    
+    def canonical_equivalence(config1, config2, temperature, tolerance=1e-6):
+        """
+        TODO: Implement canonical equivalence test
+        Return True if config1 and config2 should be in the same equivalence class
+        
+        Hint: Two configs are equivalent if they produce identical policies
+        """
+        # YOUR CODE HERE
+        policy1 = softmax(np.mean(config1, axis=0) / temperature)
+        policy2 = softmax(np.mean(config2, axis=0) / temperature)
+        
+        # TODO: Compare policies and return boolean
+        pass  # Replace with your implementation
+    
+    # Test configurations
+    test_configs = [
+        np.array([[0.8, 0.2, 0.1], [0.3, 0.9, 0.4], [0.5, 0.6, 0.7]]),
+        np.array([[0.8, 0.2, 0.1], [0.3, 0.9, 0.4], [0.5, 0.6, 0.7]]),  # Identical
+        np.array([[0.7, 0.3, 0.2], [0.4, 0.8, 0.3], [0.5, 0.6, 0.7]]),  # Different but equivalent?
+        np.array([[0.9, 0.1, 0.0], [0.2, 0.8, 0.5], [0.4, 0.7, 0.8]]),  # Clearly different
+    ]
+    
+    print("\n🧪 Test your implementation:")
+    print("Expected: Config 0 and 1 should be equivalent (identical)")
+    print("Question: Are configs 0 and 2 equivalent? (test this)")
+    print("Expected: Config 0 and 3 should NOT be equivalent")
+    
+    # TODO: Test your function here
+    
+canonical_abstraction_exercise()
+
+print("\n" + "="*70)
+
+# EXERCISE 2: STRATEGIC EQUIVALENCE RELATIONS
+print("\n🎮 EXERCISE 2: Strategic Equivalence Relations")
+print("="*45)
+
+print("""
+CHALLENGE: The paper builds on Strategic Equivalence Relations (SER).
+Understand the connection between SER and epistemic arbitration.
+
+In SER: strategies are equivalent if they yield the same best response 
+against all possible opponent strategies.
+
+In our framework: expert configurations are equivalent if they yield 
+the same policy regardless of aggregation details.
+""")
+
+def ser_connection_exercise():
+    """
+    Exercise: Explore the SER connection
+    """
+    print("🎯 YOUR EXPLORATION:")
+    print("""
+    1. How is epistemic arbitration a generalization of SER?
+    2. What plays the role of "opponent strategies" in our setting?
+    3. Why is this connection theoretically important?
+    """)
+    
+    # Analogy exercise
+    print("\n📊 ANALOGY TABLE - Fill this in:")
+    
+    analogy_data = {
+        'SER (Game Theory)': [
+            'Multiple strategies',
+            'Opponent strategies', 
+            'Best response function',
+            'Strategy equivalence',
+            'Game-theoretic optimization'
+        ],
+        'Epistemic Arbitration': [
+            'Multiple expert configs',
+            '???',  # What corresponds to opponent strategies?
+            '???',  # What corresponds to best response?
+            '???',  # What corresponds to strategy equivalence?
+            '???'   # What corresponds to optimization?
+        ]
+    }
+    
+    df = pd.DataFrame(analogy_data)
+    print(df.to_string(index=False))
+    
+    print(f"\n🤔 REFLECTION:")
+    print(f"Complete the analogy table and explain the deep connection.")
+
+ser_connection_exercise()
+
+print("\n" + "="*70)
+
+# EXERCISE 3: PARAMETER SENSITIVITY ANALYSIS
+print("\n📊 EXERCISE 3: Parameter Sensitivity Analysis")
+print("="*45)
+
+print("""
+CHALLENGE: The framework depends on temperature τ and threshold ε.
+Perform a systematic analysis of their effects.
+""")
+
+def parameter_sensitivity_exercise():
+    """
+    Exercise: Systematic parameter analysis
+    """
+    print("🎯 YOUR ANALYSIS:")
+    print("""
+    1. Create a grid of (τ, ε) values
+    2. For each combination, measure abstention frequency
+    3. Identify phase transitions
+    4. Characterize the "conservative" vs "liberal" regions
+    """)
+    
+    # TODO: Implement systematic parameter sweep
+    # Hint: Generate random configurations and test well-foundedness
+    
+    print("\n📈 QUESTIONS TO INVESTIGATE:")
+    questions = [
+        "How does abstention frequency change with temperature?",
+        "What happens at very low vs very high thresholds?", 
+        "Are there parameter combinations that never abstain?",
+        "How do the parameters interact with expert disagreement levels?",
+        "Can you find the 'phase boundaries' in parameter space?"
+    ]
+    
+    for i, q in enumerate(questions, 1):
+        print(f"{i}. {q}")
+    
+    # Sample code structure
+    print(f"\n💻 CODE STRUCTURE:")
+    print("""
+    temperatures = np.logspace(-1, 1, 10)  # 0.1 to 10
+    thresholds = np.logspace(-3, -1, 10)   # 0.001 to 0.1
+    
+    abstention_rates = np.zeros((len(temperatures), len(thresholds)))
+    
+    for i, temp in enumerate(temperatures):
+        for j, thresh in enumerate(thresholds):
+            # Generate random configurations
+            # Test well-foundedness for each
+            # Compute abstention rate
+            pass
+    
+    # Visualize with heatmap
+    # Identify interesting regions
+    """)
+
+parameter_sensitivity_exercise()
+
+print("\n" + "="*70)
+
+# EXERCISE 4: MULTI-STEP EXTENSION
+print("\n⏭️ EXERCISE 4: Multi-Step Extension")
+print("="*35)
+
+print("""
+CHALLENGE: The paper focuses on one-step decisions. 
+Extend the framework to sequential decision-making.
+""")
+
+def multistep_extension_exercise():
+    """
+    Exercise: Sequential decision framework
+    """
+    print("🎯 EXTENSION CHALLENGE:")
+    print("""
+    Design a multi-step version where:
+    1. The agent receives feedback after actions
+    2. Expert trust weights can be updated
+    3. Well-foundedness is checked at each step
+    4. The agent can build a "track record" of successful coordination
+    """)
+    
+    print("\n🤔 DESIGN QUESTIONS:")
+    design_questions = [
+        "How should expert weights evolve with feedback?",
+        "Should the threshold ε adapt over time?",
+        "How do you handle exploration vs exploitation?",
+        "What if experts learn to game the system?",
+        "How does abstention history affect future decisions?"
+    ]
+    
+    for i, q in enumerate(design_questions, 1):
+        print(f"{i}. {q}")
+    
+    # Skeleton for multi-step framework
+    print(f"\n💻 FRAMEWORK SKELETON:")
+    print("""
+    class MultiStepWellFoundedness:
+        def __init__(self):
+            self.expert_weights = np.ones(K) / K
+            self.trust_history = []
+            self.decision_history = []
+        
+        def update_weights(self, feedback):
+            # TODO: How should weights evolve?
+            pass
+        
+        def adaptive_threshold(self):
+            # TODO: Should ε change over time?
+            pass
+        
+        def sequential_decision(self, expert_predictions):
+            # TODO: Multi-step decision logic
+            pass
+    """)
+
+multistep_extension_exercise()
+
+print("\n" + "="*70)
+
+# EXERCISE 5: REAL-WORLD APPLICATIONS
+print("\n🌍 EXERCISE 5: Real-World Applications")
+print("="*35)
+
+print("""
+CHALLENGE: Apply the framework to concrete scenarios.
+""")
+
+def applications_exercise():
+    """
+    Exercise: Real-world application design
+    """
+    applications = [
+        {
+            'domain': 'Autonomous Vehicle',
+            'experts': ['Vision system', 'Radar', 'Lidar', 'GPS'],
+            'actions': ['Brake', 'Turn left', 'Turn right', 'Continue'],
+            'challenge': 'Sensor disagreement in ambiguous traffic situations'
+        },
+        {
+            'domain': 'Medical Diagnosis',
+            'experts': ['Symptom analysis', 'Lab results', 'Imaging', 'Patient history'],
+            'actions': ['Treatment A', 'Treatment B', 'More tests', 'Refer specialist'],
+            'challenge': 'Conflicting diagnostic indicators'
+        },
+        {
+            'domain': 'Financial Trading',
+            'experts': ['Technical analysis', 'Fundamental analysis', 'Sentiment', 'Risk model'],
+            'actions': ['Buy', 'Sell', 'Hold', 'Hedge'],
+            'challenge': 'Market uncertainty and model disagreement'
+        },
+        {
+            'domain': 'Content Moderation',
+            'experts': ['Text analysis', 'Image recognition', 'User reports', 'Context model'],
+            'actions': ['Allow', 'Flag', 'Remove', 'Escalate'],
+            'challenge': 'Subjective content boundaries'
+        }
+    ]
+    
+    print("🎯 APPLICATION SCENARIOS:")
+    for i, app in enumerate(applications, 1):
+        print(f"\n{i}. {app['domain']}")
+        print(f"   Experts: {', '.join(app['experts'])}")
+        print(f"   Actions: {', '.join(app['actions'])}")
+        print(f"   Challenge: {app['challenge']}")
+    
+    print(f"\n🤔 DESIGN QUESTIONS FOR EACH:")
+    questions = [
+        "What makes experts 'admissible' in this domain?",
+        "When should the system abstain vs act?",
+        "What are the costs of abstention vs miscoordination?",
+        "How would you validate the well-foundedness framework?",
+        "What domain-specific modifications would be needed?"
+    ]
+    
+    for q in questions:
+        print(f"• {q}")
+    
+    print(f"\n📝 YOUR TASK:")
+    print("Pick one application and design a complete well-foundedness system:")
+    print("• Define the expert architecture")
+    print("• Specify admissible weight construction")  
+    print("• Set appropriate parameters")
+    print("• Consider failure modes and edge cases")
+
+applications_exercise()
+
+print("\n" + "="*70)
+
+# ADVANCED TOPICS ROADMAP
+print("\n🗺️ ADVANCED TOPICS ROADMAP")
+print("="*30)
+
+print("""
+Ready to dive deeper into the paper? Here's your roadmap:
+
+📚 MATHEMATICAL FOUNDATIONS:
+□ Strategic Equivalence Relations (Section 2.1, Lauffer et al. 2023)
+□ Modal Logic and Kripke Semantics (Fagin et al. 1995)
+□ Information Bottleneck Theory (Tishby et al. 2000)
+□ Common Knowledge Theory (Aumann 1976)
+
+🧮 COMPUTATIONAL ASPECTS:
+□ Constrained Optimization for Abstraction Construction
+□ Sample Complexity and Concentration Bounds  
+□ Lipschitz Constants for Softmax Policies
+□ Computational Complexity Analysis
+
+🎯 THEORETICAL EXTENSIONS:
+□ Norm Coordination Theory (Section 4.2)
+□ Hierarchical Agency Connections (Kulveit 2024)
+□ Scale-Free Theory of Agency (Ngo 2025a)
+□ Learning Normativity (Demski 2020, 2021)
+
+🛠️ IMPLEMENTATION TOPICS:
+□ Practical Abstraction Methods (Section 6.3)
+□ Adaptive Weighting Set Construction  
+□ Multi-Agent Coordination Protocols
+□ Robust Parameter Selection
+
+🔬 RESEARCH DIRECTIONS:
+□ Strategic Expert Behavior and Mechanism Design
+□ Online Learning and Adaptation
+□ Distributed Implementation
+□ Empirical Validation Studies
+
+🎓 RECOMMENDED READING ORDER:
+1. Re-read paper sections 2.1-2.2 (Canonical Abstraction)
+2. Study section 4 (Well-Foundedness Theory)  
+3. Explore section 6 (Computational Methods)
+4. Investigate the coordination theory perspective (4.2)
+5. Read the cited background papers for deeper context
+""")
+
+print(f"\n🎯 NEXT STEPS:")
+print("1. Implement one of the exercises above")
+print("2. Re-read the paper with your new understanding")
+print("3. Try applying the framework to a domain you care about")
+print("4. Explore the connections to related work")
+print("5. Consider contributing to this research area!")
+
+print(f"\n🏆 CONGRATULATIONS!")
+print("You now have a deep understanding of well-founded arbitration.")
+print("You're ready to engage with the advanced mathematical treatment")
+print("and potentially contribute to this fascinating research area!")
+
+print("\n" + "="*70)
+print("🎓 Happy researching!")# Well-Founded Arbitration Tutorial - Part 3: Connecting to the Paper
+
+import numpy as np
+import matplotlib.pyplot as plt
+import seaborn as sns
+from scipy.special import softmax
+from scipy.stats import entropy
+import pandas as pd
+from scipy.optimize import minimize
+import warnings
+warnings.filterwarnings('ignore')
+
+plt.style.use('seaborn-v0_8')
+sns.set_palette("husl")
+
+print("🎓 Part 3: Connecting Your Discoveries to the Formal Framework")
+print("="*65)
+
+print("""
+Amazing work! You've independently discovered the core concepts of well-founded arbitration.
+Now let's see how your intuitions map to the formal mathematical framework in the paper.
+""")
+
+# PART 1: FROM INTUITION TO FORMALISM
+print("\n📚 PART 1: Your Discoveries → Paper's Framework")
+print("="*45)
+
+print("""
+Let's map what you discovered to the paper's terminology:
+
+YOUR DISCOVERY                    →  PAPER'S TERM
+───────────────────────────────────────────────────────────
+"Grouping similar configs"        →  Abstraction function φ(Q)
+"Soft decisions with temperature" →  Boltzmann policy π*(a|Q)  
+"Sufficiency condition"           →  Epistemic Sufficiency (∆SEC < ε)
+"Stability condition"             →  Epistemic Stability (∆SECplural < ε)
+"Dual gate mechanism"             →  Well-Foundedness
+"Abstain when gates fail"         →  Epistemic Integrity Preservation
+""")
+
+print(f"\n🤔 REFLECTION QUESTION:")
+print(f"Now that you see the formal terms, which concepts were hardest to discover intuitively?")
+print(f"💭 What made the mathematical formulation necessary?")
+
+print("\n" + "="*70)
+
+# PART 2: THE CANONICAL ABSTRACTION
+print("\n🎯 PART 2: The Canonical Abstraction")
+print("="*35)
+
+print("""
+Remember how we struggled with creating good abstractions? The paper solves this 
+with the "canonical abstraction" - the theoretically optimal way to group configurations.
+
+The key insight: Two configurations are equivalent if and only if they produce 
+identical soft policies.
+""")
+
+def canonical_equivalence_class(config, temperature, tolerance=1e-6):
+    """
+    Find the canonical equivalence class for a configuration.
+    In practice, this is computationally hard, so we approximate.
+    """
+    policy = softmax(np.mean(config, axis=0) / temperature)
+    # Round to create discrete equivalence classes
+    rounded_policy = np.round(policy / tolerance) * tolerance
+    return tuple(rounded_policy)
+
+def is_canonically_equivalent(config1, config2, temperature, tolerance=1e-6):
+    """Test if two configurations are canonically equivalent"""
+    policy1 = softmax(np.mean(config1, axis=0) / temperature)
+    policy2 = softmax(np.mean(config2, axis=0) / temperature)
+    
+    # They're equivalent if their policies are identical (within tolerance)
+    return np.allclose(policy1, policy2, atol=tolerance)
+
+# Demonstrate canonical equivalence
+print("🧪 CANONICAL EQUIVALENCE DEMO")
+print("-" * 30)
+
+# Create two configurations that should be equivalent
+config_a = np.array([
+    [0.8, 0.2, 0.1],
+    [0.3, 0.9, 0.4],
+    [0.5, 0.6, 0.7]
+])
+
+# Create a different config that produces the same average
+config_b = np.array([
+    [0.7, 0.3, 0.2],  # Slightly different individual predictions
+    [0.4, 0.8, 0.3],  # but same average!
+    [0.5, 0.6, 0.7]
+])
+
+# Verify they have the same average
+avg_a = np.mean(config_a, axis=0)
+avg_b = np.mean(config_b, axis=0)
+print(f"Config A average: {avg_a}")
+print(f"Config B average: {avg_b}")
+print(f"Averages equal: {np.allclose(avg_a, avg_b)}")
+
+temp = 1.0
+equiv = is_canonically_equivalent(config_a, config_b, temp)
+print(f"Canonically equivalent: {equiv}")
+
+print(f"\n🤔 INSIGHT QUESTION:")
+print(f"Why is the canonical abstraction 'optimal' according to the paper?")
+print(f"💭 What does it preserve that other abstractions might lose?")
+
+print("\n" + "="*70)
+
+# PART 3: THE INFORMATION BOTTLENECK CONNECTION
+print("\n🔗 PART 3: Information Bottleneck Perspective")
+print("="*40)
+
+print("""
+The paper connects to information theory via the Information Bottleneck principle:
+
+Find abstraction φ that:
+MINIMIZES: Information about expert configs (compression)
+SUBJECT TO: Preserving decision-relevant information
+
+This is exactly what you discovered! Compress as much as possible while 
+keeping decisions unchanged.
+""")
+
+def information_bottleneck_objective(abstraction_params, configs, temperature, lambda_reg=1.0):
+    """
+    Simplified IB objective for demonstration.
+    In practice, this would be much more complex.
+    """
+    # This is a conceptual demo - real implementation would be much more involved
+    
+    # Compression term: how much we compress the expert space
+    compression = np.var(abstraction_params)  # Proxy for compression
+    
+    # Accuracy term: how well we preserve decision boundaries
+    # (In real implementation, this would involve the epistemic sufficiency)
+    accuracy_loss = 0
+    for config in configs:
+        # This would involve checking policy preservation
+        pass
+    
+    return compression + lambda_reg * accuracy_loss
+
+print("🧪 INFORMATION BOTTLENECK DEMO")
+print("-" * 32)
+
+# Generate some sample configurations
+np.random.seed(42)
+sample_configs = [np.random.rand(3, 3) for _ in range(10)]
+
+# The paper's approach balances compression vs accuracy
+lambdas = [0.1, 1.0, 10.0]
+compressions = [0.8, 0.5, 0.2]  # Hypothetical compression levels
+accuracies = [0.6, 0.8, 0.95]   # Hypothetical accuracy levels
+
+plt.figure(figsize=(10, 6))
+plt.plot(compressions, accuracies, 'bo-', linewidth=2, markersize=8)
+for i, lam in enumerate(lambdas):
+    plt.annotate(f'λ={lam}', (compressions[i], accuracies[i]), 
+                xytext=(10, 10), textcoords='offset points')
+
+plt.xlabel('Compression (lower = more compressed)')
+plt.ylabel('Decision Accuracy (higher = better)')
+plt.title('Information Bottleneck Trade-off\n(Conceptual)')
+plt.grid(True, alpha=0.3)
+plt.show()
+
+print(f"\n🤔 CONNECTION QUESTION:")
+print(f"How does this relate to your earlier discovery about abstraction trade-offs?")
+print(f"💭 What happens at the extremes of this trade-off?")
+
+print("\n" + "="*70)
+
+# PART 4: THE COORDINATION THEORY PERSPECTIVE
+print("\n🤝 PART 4: Epistemic Norm Coordination")
+print("="*35)
+
+print("""
+The paper offers a second perspective: viewing the agent as an internal coalition 
+that needs to achieve "common knowledge" about what distinctions matter.
+
+This connects to game theory and distributed systems:
+- Multiple internal "players" (experts)
+- Need to coordinate on shared norms
+- Abstention when coordination fails
+
+This is like the classic "Coordinated Attack" problem!
+""")
+
+def coordination_game_demo():
+    """
+    Demonstrate the coordination perspective with a simple game
+    """
+    print("🎮 COORDINATION GAME DEMO")
+    print("-" * 25)
+    
+    # Three internal experts need to coordinate on an action
+    experts = ['Expert 1', 'Expert 2', 'Expert 3']
+    actions = ['Action A', 'Action B', 'Action C']
+    
+    # Each expert has preferences (payoff matrix)
+    payoffs = np.array([
+        [3, 1, 0],  # Expert 1 strongly prefers A
+        [1, 3, 2],  # Expert 2 prefers B, but C is okay
+        [0, 2, 3],  # Expert 3 prefers C
+    ])
+    
+    print("Expert preferences (higher = better):")
+    df = pd.DataFrame(payoffs, index=experts, columns=actions)
+    print(df)
+    
+    # If they can't coordinate (no common knowledge), they might abstain
+    print(f"\n💭 If experts can't agree on shared norms about which action to take,")
+    print(f"the coalition might choose to abstain rather than risk miscoordination.")
+    
+    return payoffs
+
+coordination_game_demo()
+
+print(f"\n🤔 DEEP QUESTION:")
+print(f"How does 'epistemic norm coordination' relate to your stability discovery?")
+print(f"💭 What kind of 'norms' are the experts trying to coordinate on?")
+
+print("\n" + "="*70)
+
+# PART 5: PRACTICAL IMPLEMENTATION
+print("\n⚙️ PART 5: From Theory to Practice")
+print("="*30)
+
+print("""
+The paper provides practical algorithms. Let's implement a simplified version
+of their framework:
+""")
+
+class PracticalWellFoundednessFramework:
+    """
+    Simplified implementation inspired by the paper's framework
+    """
+    
+    def __init__(self, temperature=1.0, epsilon=0.01, max_samples=1000):
+        self.temperature = temperature
+        self.epsilon = epsilon
+        self.max_samples = max_samples
+    
+    def compute_policy(self, expert_predictions, weights=None):
+        """Compute soft policy from expert predictions"""
+        if weights is None:
+            weights = np.ones(len(expert_predictions)) / len(expert_predictions)
+        
+        weighted_avg = np.average(expert_predictions, axis=0, weights=weights)
+        return softmax(weighted_avg / self.temperature)
+    
+    def sample_based_sufficiency_test(self, config, abstraction_class, n_samples=100):
+        """
+        Sample-based approximation of epistemic sufficiency
+        (Paper uses this for computational tractability)
+        """
+        if len(abstraction_class) <= 1:
+            return 0.0, True
+        
+        # Sample pairs from the abstraction class
+        max_kl = 0
+        n_comparisons = min(n_samples, len(abstraction_class) * (len(abstraction_class) - 1) // 2)
+        
+        for _ in range(n_comparisons):
+            # Sample two configs from the class
+            idx1, idx2 = np.random.choice(len(abstraction_class), 2, replace=False)
+            config1 = abstraction_class[idx1]
+            config2 = abstraction_class[idx2]
+            
+            policy1 = self.compute_policy(config1)
+            policy2 = self.compute_policy(config2)
+            
+            kl = entropy(policy1, policy2)
+            max_kl = max(max_kl, kl)
+        
+        return max_kl, max_kl <= self.epsilon
+    
+    def stability_test(self, config, admissible_weights):
+        """Test epistemic stability over admissible weight sets"""
+        policies = []
+        for weights in admissible_weights:
+            policy = self.compute_policy(config, weights)
+            policies.append(policy)
+        
+        max_kl = 0
+        for i in range(len(policies)):
+            for j in range(i + 1, len(policies)):
+                kl = entropy(policies[i], policies[j])
+                max_kl = max(max_kl, kl)
+        
+        return max_kl, max_kl <= self.epsilon
+    
+    def well_foundedness_decision(self, config, abstraction_class, admissible_weights):
+        """Main decision procedure"""
+        # Test epistemic sufficiency
+        suff_score, passes_suff = self.sample_based_sufficiency_test(config, abstraction_class)
+        
+        # Test epistemic stability
+        stab_score, passes_stab = self.stability_test(config, admissible_weights)
+        
+        # Both must pass for well-foundedness
+        is_well_founded = passes_suff and passes_stab
+        
+        return {
+            'decision': 'ACT' if is_well_founded else 'ABSTAIN',
+            'well_founded': is_well_founded,
+            'sufficiency_test': {'score': suff_score, 'passes': passes_suff},
+            'stability_test': {'score': stab_score, 'passes': passes_stab}
+        }
+
+# Test the practical framework
+print("🧪 PRACTICAL FRAMEWORK TEST")
+print("-" * 28)
+
+framework = PracticalWellFoundednessFramework(temperature=0.5, epsilon=0.02)
+
+# Create test data
+np.random.seed(42)
+test_config = np.random.rand(3, 3)
+abstraction_class = [test_config + np.random.normal(0, 0.1, test_config.shape) for _ in range(5)]
+
+# Define admissible weight sets (like the paper's construction methods)
+admissible_weights = [
+    np.array([0.33, 0.33, 0.34]),  # Equal weighting
+    np.array([0.5, 0.25, 0.25]),   # Expert 1 emphasis
+    np.array([0.25, 0.5, 0.25]),   # Expert 2 emphasis
+    np.array([0.25, 0.25, 0.5]),   # Expert 3 emphasis
+]
+
+result = framework.well_foundedness_decision(test_config, abstraction_class, admissible_weights)
+
+print(f"Decision: {result['decision']}")
+print(f"Well-founded: {result['well_founded']}")
+print(f"Sufficiency: {result['sufficiency_test']['score']:.4f} ({'✓' if result['sufficiency_test']['passes'] else '✗'})")
+print(f"Stability: {result['stability_test']['score']:.4f} ({'✓' if result['stability_test']['passes'] else '✗'})")
+
+print(f"\n🤔 IMPLEMENTATION QUESTION:")
+print(f"What computational challenges does the paper address that we haven't considered?")
+print(f"💭 Think about scalability, continuous spaces, etc...")
+
+print("\n" + "="*70)
+
+# FINAL SYNTHESIS
+print("\n🎯 FINAL SYNTHESIS: The Complete Picture")
+print("="*40)
+
+print("""
+🏆 CONGRATULATIONS! 
+
+You have now:
+✅ Independently discovered the core concepts
+✅ Built intuition through hands-on experimentation  
+✅ Connected your discoveries to the formal framework
+✅ Implemented a practical version
+
+KEY INSIGHTS YOU'VE GAINED:
+
+1️⃣ EPISTEMIC ARBITRATION: The fundamental challenge of acting under 
+   internal disagreement
+
+2️⃣ DUAL CONDITIONS: Both sufficiency (preserving distinctions) and 
+   stability (robust aggregation) are necessary
+
+3️⃣ ABSTENTION AS VIRTUE: Sometimes not acting preserves future options
+   for principled coordination
+
+4️⃣ COMPUTATIONAL TRACTABILITY: Real implementations need sampling-based
+   approximations and careful parameter tuning
+
+5️⃣ SCALE INVARIANCE: The framework applies from neural modules to 
+   human-AI teams to democratic institutions
+
+🤔 FINAL REFLECTION QUESTIONS:
+
+What aspects of the paper make more sense now that you've built the intuition?
+
+How might this framework apply to your own decision-making?
+
+What extensions or applications can you imagine?
+
+What questions do you still have about the formal mathematical treatment?
+
+📚 Ready to dive deeper into the paper? You now have the conceptual foundation
+to understand the advanced topics like Strategic Equivalence Relations,
+modal logic connections, and the complexity analysis!
+""")
+
+print("\n🎓 End of Tutorial - You're ready for the advanced material!")
