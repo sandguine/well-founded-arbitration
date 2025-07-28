@@ -1,0 +1,431 @@
+# Well-Founded Arbitration Tutorial - Part 2: Formalizing the Framework
+
+import numpy as np
+import matplotlib.pyplot as plt
+import seaborn as sns
+from scipy.special import softmax
+from scipy.stats import entropy
+import pandas as pd
+from itertools import combinations
+import warnings
+warnings.filterwarnings('ignore')
+
+plt.style.use('seaborn-v0_8')
+sns.set_palette("husl")
+
+print("🎯 Welcome back! Part 2: Formalizing Our Intuitions")
+print("="*55)
+
+print("""
+In Part 1, we discovered two fundamental challenges:
+1. When are expert configurations 'equivalent enough' to group together?
+2. How do we handle uncertainty about expert weighting?
+
+Let's formalize these intuitions step by step...
+""")
+
+# PART 1: FORMALIZING EPISTEMIC SUFFICIENCY
+print("\n📐 PART 1: Epistemic Sufficiency")
+print("="*35)
+
+print("""
+Remember our key insight: two configurations should be equivalent 
+if they lead to the same decision behavior.
+
+Let's create a systematic way to test this...
+""")
+
+def kl_divergence(p, q, epsilon=1e-10):
+    """Compute KL divergence with numerical stability"""
+    p = np.array(p) + epsilon
+    q = np.array(q) + epsilon
+    p = p / np.sum(p)  # Normalize
+    q = q / np.sum(q)  # Normalize
+    return entropy(p, q)
+
+def soft_policy(expert_predictions, temperature=1.0):
+    """Convert expert predictions to soft policy"""
+    avg_pred = np.mean(expert_predictions, axis=0)
+    return softmax(avg_pred / temperature)
+
+# Let's create an abstraction function
+class SimpleAbstraction:
+    def __init__(self, num_clusters=2):
+        self.num_clusters = num_clusters
+        
+    def apply(self, config):
+        """Map configuration to abstraction class"""
+        # Simple abstraction: just round predictions to nearest 0.5
+        rounded = np.round(config * 2) / 2
+        return tuple(rounded.flatten())
+
+# Generate some test configurations
+np.random.seed(42)
+configs = []
+for i in range(6):
+    config = np.random.rand(3, 3)  # 3 experts, 3 actions
+    configs.append(config)
+
+abstraction = SimpleAbstraction()
+temperature = 0.5
+
+print("🧪 EXPERIMENT: Testing Epistemic Sufficiency")
+print("-" * 45)
+
+# Group configurations by abstraction
+abstraction_groups = {}
+for i, config in enumerate(configs):
+    abs_class = abstraction.apply(config)
+    if abs_class not in abstraction_groups:
+        abstraction_groups[abs_class] = []
+    abstraction_groups[abs_class].append((i, config))
+
+print(f"Found {len(abstraction_groups)} abstraction classes")
+
+# Test sufficiency for each group
+def test_epistemic_sufficiency(group_configs, temperature, threshold=0.01):
+    """Test if configurations in a group have similar policies"""
+    policies = []
+    for config_id, config in group_configs:
+        policy = soft_policy(config, temperature)
+        policies.append(policy)
+    
+    # Compute maximum KL divergence within group
+    max_kl = 0
+    for i in range(len(policies)):
+        for j in range(i+1, len(policies)):
+            kl = kl_divergence(policies[i], policies[j])
+            max_kl = max(max_kl, kl)
+    
+    return max_kl, max_kl <= threshold
+
+print("\nTesting each abstraction class:")
+for i, (abs_class, group) in enumerate(abstraction_groups.items()):
+    if len(group) > 1:  # Only test groups with multiple configs
+        max_kl, is_sufficient = test_epistemic_sufficiency(group, temperature)
+        print(f"Group {i+1}: {len(group)} configs, max KL = {max_kl:.4f}, sufficient = {is_sufficient}")
+
+print(f"\n🤔 DISCOVERY QUESTION 1:")
+print(f"What does 'epistemic sufficiency' mean in your own words?")
+print(f"💭 When should we group configurations together?")
+
+print(f"\n🤔 DISCOVERY QUESTION 2:")
+print(f"What happens if we set the threshold too high? Too low?")
+print(f"💭 Think about the trade-offs...")
+
+print("\n" + "="*70)
+
+# PART 2: THE WEIGHTING UNCERTAINTY PROBLEM
+print("\n⚖️ PART 2: Epistemic Stability")
+print("="*30)
+
+print("""
+Now let's tackle the second problem: uncertainty about expert weights.
+
+Even if we have a good abstraction, we might still be uncertain about 
+how much to trust each expert. This creates another source of instability.
+""")
+
+# Take one configuration and try different reasonable weightings
+config = configs[0]
+print("Testing one configuration with different expert weightings...")
+
+# Define some reasonable weighting schemes
+reasonable_weights = [
+    np.array([0.33, 0.33, 0.34]),  # Equal
+    np.array([0.5, 0.25, 0.25]),   # Trust expert 1 more
+    np.array([0.25, 0.5, 0.25]),   # Trust expert 2 more
+    np.array([0.25, 0.25, 0.5]),   # Trust expert 3 more
+    np.array([0.4, 0.4, 0.2]),     # De-emphasize expert 3
+    np.array([0.6, 0.2, 0.2]),     # Strongly trust expert 1
+]
+
+def weighted_soft_policy(expert_predictions, weights, temperature=1.0):
+    """Soft policy with weighted expert aggregation"""
+    weighted_avg = np.average(expert_predictions, axis=0, weights=weights)
+    return softmax(weighted_avg / temperature)
+
+policies_from_weights = []
+for weights in reasonable_weights:
+    policy = weighted_soft_policy(config, weights, temperature)
+    policies_from_weights.append(policy)
+
+# Visualize the different policies
+plt.figure(figsize=(12, 8))
+actions = ['Action 1', 'Action 2', 'Action 3']
+
+for i, (weights, policy) in enumerate(zip(reasonable_weights, policies_from_weights)):
+    plt.subplot(2, 3, i+1)
+    bars = plt.bar(actions, policy, alpha=0.7)
+    plt.title(f'Weights: [{weights[0]:.2f}, {weights[1]:.2f}, {weights[2]:.2f}]')
+    plt.ylim(0, 1)
+    plt.ylabel('Probability')
+    
+    for bar, prob in zip(bars, policy):
+        plt.text(bar.get_x() + bar.get_width()/2, bar.get_height() + 0.01, 
+                f'{prob:.3f}', ha='center', va='bottom', fontsize=8)
+
+plt.tight_layout()
+plt.show()
+
+# Compute stability metric
+def test_epistemic_stability(config, weight_set, temperature, threshold=0.01):
+    """Test if different reasonable weightings lead to similar policies"""
+    policies = []
+    for weights in weight_set:
+        policy = weighted_soft_policy(config, weights, temperature)
+        policies.append(policy)
+    
+    # Compute maximum KL divergence between any pair
+    max_kl = 0
+    for i in range(len(policies)):
+        for j in range(i+1, len(policies)):
+            kl = kl_divergence(policies[i], policies[j])
+            max_kl = max(max_kl, kl)
+    
+    return max_kl, max_kl <= threshold
+
+max_kl_stability, is_stable = test_epistemic_stability(config, reasonable_weights, temperature)
+print(f"\nStability test result:")
+print(f"Maximum KL divergence between weightings: {max_kl_stability:.4f}")
+print(f"Is epistemically stable: {is_stable}")
+
+print(f"\n🤔 DISCOVERY QUESTION 3:")
+print(f"What does 'epistemic stability' mean?")
+print(f"💭 When should we be confident in our decision despite weighting uncertainty?")
+
+print(f"\n🤔 DISCOVERY QUESTION 4:")
+print(f"What would happen if experts disagree very strongly?")
+print(f"💭 Would that affect stability?")
+
+print("\n" + "="*70)
+
+# PART 3: THE DUAL GATE MECHANISM
+print("\n🚪🚪 PART 3: The Dual Gate Mechanism")
+print("="*35)
+
+print("""
+Now we can combine our two insights into a decision mechanism:
+
+GATE 1: Epistemic Sufficiency
+- Are configurations in this abstraction class similar enough?
+
+GATE 2: Epistemic Stability  
+- Are different reasonable weightings similar enough?
+
+The agent should only ACT if BOTH gates pass. Otherwise, ABSTAIN.
+""")
+
+def well_foundedness_test(config, abstraction, weight_set, temperature, threshold=0.01):
+    """
+    Test if a configuration passes both epistemic conditions
+    Returns: (is_well_founded, sufficiency_score, stability_score)
+    """
+    
+    # For simplicity, we'll test stability directly (in practice, you'd test 
+    # against other configs in the same abstraction class for sufficiency)
+    
+    # Test stability
+    stability_score, passes_stability = test_epistemic_stability(
+        config, weight_set, temperature, threshold
+    )
+    
+    # For this demo, assume sufficiency passes (in real implementation,
+    # you'd test against other configs in the abstraction class)
+    sufficiency_score = 0.005  # Assume low divergence
+    passes_sufficiency = sufficiency_score <= threshold
+    
+    is_well_founded = passes_sufficiency and passes_stability
+    
+    return is_well_founded, sufficiency_score, stability_score
+
+# Test several configurations
+print("🧪 TESTING WELL-FOUNDEDNESS")
+print("-" * 30)
+
+for i, config in enumerate(configs[:3]):
+    result = well_foundedness_test(config, abstraction, reasonable_weights, temperature)
+    is_well_founded, suff_score, stab_score = result
+    
+    action = "ACT" if is_well_founded else "ABSTAIN"
+    print(f"\nConfiguration {i+1}:")
+    print(f"  Sufficiency score: {suff_score:.4f}")
+    print(f"  Stability score: {stab_score:.4f}")
+    print(f"  Decision: {action}")
+
+print(f"\n🤔 DISCOVERY QUESTION 5:")
+print(f"Why do we need BOTH conditions?")
+print(f"💭 What could go wrong if we only checked one?")
+
+print(f"\n🤔 DISCOVERY QUESTION 6:")
+print(f"When should an agent abstain vs act?")
+print(f"💭 What does abstention preserve?")
+
+print("\n" + "="*70)
+
+# PART 4: PARAMETER SENSITIVITY
+print("\n🎛️ PART 4: Parameter Sensitivity")
+print("="*30)
+
+print("""
+Our framework has two key parameters:
+- Temperature (τ): Controls decision sharpness
+- Threshold (ε): Controls tolerance for divergence
+
+Let's explore how these affect the abstention behavior...
+""")
+
+# Test different parameter combinations
+temperatures = [0.1, 0.5, 1.0, 2.0]
+thresholds = [0.001, 0.01, 0.05, 0.1]
+
+config = configs[0]  # Use one configuration for this analysis
+
+results = np.zeros((len(temperatures), len(thresholds)))
+
+for i, temp in enumerate(temperatures):
+    for j, thresh in enumerate(thresholds):
+        _, _, stability_score = well_foundedness_test(
+            config, abstraction, reasonable_weights, temp, thresh
+        )
+        # Store whether it passes (1) or fails (0)
+        results[i, j] = 1 if stability_score <= thresh else 0
+
+# Visualize the results
+plt.figure(figsize=(10, 8))
+sns.heatmap(results, 
+            xticklabels=[f'ε={t}' for t in thresholds],
+            yticklabels=[f'τ={t}' for t in temperatures],
+            annot=True, 
+            cmap='RdYlGn',
+            cbar_kws={'label': 'Passes Test (1=Act, 0=Abstain)'})
+plt.title('Well-Foundedness Test Results\n(Green=Act, Red=Abstain)')
+plt.xlabel('Threshold (ε)')
+plt.ylabel('Temperature (τ)')
+plt.show()
+
+print(f"\n🤔 DISCOVERY QUESTION 7:")
+print(f"What patterns do you see in the heatmap?")
+print(f"💭 How do temperature and threshold interact?")
+
+print(f"\n🤔 DISCOVERY QUESTION 8:")
+print(f"What are the trade-offs in parameter selection?")
+print(f"💭 Conservative vs liberal settings...")
+
+print("\n" + "="*70)
+
+# PART 5: PUTTING IT ALL TOGETHER
+print("\n🎯 PART 5: The Complete Framework")
+print("="*35)
+
+print("""
+Let's implement the complete well-foundedness framework:
+""")
+
+class WellFoundednessFramework:
+    def __init__(self, temperature=1.0, threshold=0.01):
+        self.temperature = temperature
+        self.threshold = threshold
+        
+    def epistemic_sufficiency_test(self, config_group):
+        """Test if configurations in group have similar policies"""
+        if len(config_group) <= 1:
+            return 0.0, True
+            
+        policies = []
+        for config in config_group:
+            policy = soft_policy(config, self.temperature)
+            policies.append(policy)
+        
+        max_kl = 0
+        for i in range(len(policies)):
+            for j in range(i+1, len(policies)):
+                kl = kl_divergence(policies[i], policies[j])
+                max_kl = max(max_kl, kl)
+        
+        return max_kl, max_kl <= self.threshold
+    
+    def epistemic_stability_test(self, config, weight_set):
+        """Test if different weightings lead to similar policies"""
+        policies = []
+        for weights in weight_set:
+            policy = weighted_soft_policy(config, weights, self.temperature)
+            policies.append(policy)
+        
+        max_kl = 0
+        for i in range(len(policies)):
+            for j in range(i+1, len(policies)):
+                kl = kl_divergence(policies[i], policies[j])
+                max_kl = max(max_kl, kl)
+        
+        return max_kl, max_kl <= self.threshold
+    
+    def should_act(self, config, config_group, weight_set):
+        """Main decision function: should the agent act or abstain?"""
+        suff_score, passes_suff = self.epistemic_sufficiency_test(config_group)
+        stab_score, passes_stab = self.epistemic_stability_test(config, weight_set)
+        
+        well_founded = passes_suff and passes_stab
+        
+        return {
+            'action': 'ACT' if well_founded else 'ABSTAIN',
+            'well_founded': well_founded,
+            'sufficiency_score': suff_score,
+            'stability_score': stab_score,
+            'passes_sufficiency': passes_suff,
+            'passes_stability': passes_stab
+        }
+
+# Test the complete framework
+framework = WellFoundednessFramework(temperature=0.5, threshold=0.02)
+
+print("🧪 COMPLETE FRAMEWORK TEST")
+print("-" * 28)
+
+for i, config in enumerate(configs[:3]):
+    # Create a dummy group (in practice, this would be from abstraction)
+    similar_configs = [config, config + np.random.normal(0, 0.01, config.shape)]
+    
+    result = framework.should_act(config, similar_configs, reasonable_weights)
+    
+    print(f"\nConfiguration {i+1}:")
+    print(f"  Action: {result['action']}")
+    print(f"  Sufficiency: {result['sufficiency_score']:.4f} ({'✓' if result['passes_sufficiency'] else '✗'})")
+    print(f"  Stability: {result['stability_score']:.4f} ({'✓' if result['passes_stability'] else '✗'})")
+
+print("\n" + "="*70)
+
+# FINAL REFLECTION
+print("\n🎯 FINAL REFLECTION")
+print("="*20)
+
+print("""
+🏆 Congratulations! You've discovered the core framework of well-founded arbitration!
+
+Let's reflect on what we've learned:
+
+🤔 DEEP QUESTION 1: 
+What is the fundamental insight behind "well-foundedness"?
+💭 Think about what it means for a decision to be "justified"...
+
+🤔 DEEP QUESTION 2:
+How does this framework handle the exploration vs exploitation dilemma?
+💭 What does abstention allow the agent to preserve?
+
+🤔 DEEP QUESTION 3:
+Could this framework apply beyond AI systems?
+💭 Think about human decision-making, organizations, democracies...
+
+🤔 DEEP QUESTION 4:
+What are the limitations of this approach?
+💭 What assumptions are we making?
+
+The mathematical framework you've discovered formalizes these intuitions:
+- Epistemic Sufficiency: ∆SEC < ε  
+- Epistemic Stability: ∆SECplural < ε
+- Well-Foundedness: Both conditions satisfied
+
+Next steps: Read the paper again and see how your discoveries map to their 
+formal mathematical treatment. You should now have the intuition to understand
+the canonical abstraction, Boltzmann policies, and norm coordination theory!
+""")
